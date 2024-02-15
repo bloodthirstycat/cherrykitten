@@ -1,18 +1,107 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>test</title>
-  </head>
-  <body>
-    <script src="https://unpkg.com/kaboom@3000/dist/kaboom.js"></script>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Falling Objects Game</title>
+    <script src="https://kaboomjs.com/lib/0.6.0/kaboom.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
     <script>
-      kaboom()
-      drawCircle({
-        pos: vec2(0, 0),
-        radius: 120,
-        color: rgb(255, 255, 0),
-      })
+        // Initialize kaboom
+        kaboom({
+            global: true,
+            fullscreen: true,
+            scale: 1,
+            debug: true,
+            clearColor: [0, 0, 0, 1]
+        });
+
+        // Load assets
+        loadRoot('https://i.imgur.com/');
+        loadSprite('character', 'UDhLsy3.png');
+        loadSprite('object', '9Iktc7D.png');
+
+        // Game logic
+        const FALL_SPEED = 120;
+        const OBJECT_SIZE = 30;
+
+        let isGameOver = false;
+        let score = 0;
+
+        // Character
+        const player = add([
+            sprite('character'),
+            pos(width() / 2, height() - 100),
+            origin('center'),
+            scale(0.5),
+            body()
+        ]);
+
+        // Falling objects
+        function spawnObject() {
+            const posX = rand(0, width() - OBJECT_SIZE);
+            const object = add([
+                sprite('object'),
+                pos(posX, 0),
+                origin('center'),
+                scale(0.5),
+                body(),
+                'object'
+            ]);
+        }
+
+        // Collision detection
+        player.collides('object', (obj) => {
+            if (!isGameOver) {
+                destroy(obj);
+                gameOver();
+            }
+        });
+
+        // Game over logic
+        function gameOver() {
+            isGameOver = true;
+            player.color = rgb(1, 0, 0);
+            player.body.collides('object', () => {});
+            wait(1, () => {
+                go('gameover', score);
+            });
+        }
+
+        // Game loop
+        action('object', (obj) => {
+            obj.move(0, FALL_SPEED);
+            if (obj.pos.y >= height()) {
+                destroy(obj);
+                score++;
+            }
+        });
+
+        // Spawn objects every second
+        loop(1, () => {
+            spawnObject();
+        });
+
+        // Control the player
+        keyDown('left', () => {
+            if (!isGameOver) {
+                player.move(-120, 0);
+            }
+        });
+
+        keyDown('right', () => {
+            if (!isGameOver) {
+                player.move(120, 0);
+            }
+        });
+
     </script>
-  </body>
+</body>
 </html>
